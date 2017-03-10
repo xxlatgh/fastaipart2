@@ -9,36 +9,61 @@ from scipy.misc import imsave
 
 
 def img_resize(img):
+    '''Resize the image to less than 500 x 500. 
+        Args:
+            img: an actual image.          
+    '''    
     if (img.size[0]>500) or (img.size[1]>500):
         factor = (img.size[0]+img.size[1])/1000
         img = img.resize(np.divide(img.size, factor).astype('int32'))
     return img
 
-def img_norm(x, rn_mean):
-    return (x - rn_mean)[:, :, :, ::-1]
 
-def img_preproc(path):
-    img = Image.open(path)
-    img = img_resize(img)
+def img_norm(img_arr):
+    '''Normalize image against imagenet mean.
+        Args:
+            img_arr: a numpy array of an image.
+    '''
     imagenet_mean = [123.68, 116.779, 103.939]
     rn_mean = np.array((imagenet_mean), dtype=np.float32)   
-    img_arr = np.array(img)
+    img_arr = (img_arr- rn_mean)[:, :, :, ::-1] # Flip the channels from RGB to BGR
+    return img_arr
+
+def load_image(size, path):
+    '''Load image from disc and return as np array.
+        Args:
+            size: The desired dimensions of the output image.
+            path: The full path of the image to load.
+    '''
+    width, height = size
+    img = Image.open(path)
+    img = img.resize((width, height))
+    img_arr = np.array(img.copy())
     img_arr = np.expand_dims(img_arr, 0)
-    return img_arr, rn_mean
+    return img_arr
 
-def get_content(content_path):
-    img_arr, rn_mean = img_preproc(content_path)
-    img_arr = img_norm(img_arr, rn_mean)
-    shp = img_arr.shape
-    return img_arr, shp
+def get_content(size, content_path):
+    '''Get content image from disc and return as a np array.
+        Args:
+            size: The desired dimensions of the output image.
+            content_path: The full path of the content image to load.
+    '''
+    img_arr = load_image(size, content_path)
+    img_arr = img_norm(img_arr)
+    return img_arr
 
-def get_style(style_path):
-    style_arr, rn_mean = img_preproc(style_path)
-    style_arr = img_norm(style_arr[:,:,:,:3], rn_mean)
-    shp = style_arr.shape
-    return style_arr, shp
+def get_style(size, style_path):
+    '''Get style image from disc and return as a np array.
+        Args:
+            size: The desired dimensions of the output image.
+            style_path: The full path of the style image to load.
+    '''
+    style_arr = load_image(size, style_path)
+    style_arr = img_norm(style_arr[:,:,:,:3])
+    return style_arr
 
 def htile_style(style, num, path):
+    
     imgs = [style for i in range(num)]
     min_shape = sorted( [(np.sum(i.size), i.size ) for i in imgs])[0][1]
     imgs_comb = np.hstack( (np.asarray( i.resize(min_shape) ) for i in imgs ) )
