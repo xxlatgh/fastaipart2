@@ -59,6 +59,8 @@ def get_style(size, style_path):
             style_path: The full path of the style image to load.
     '''
     style_arr = load_image(size, style_path)
+    
+    
     style_arr = img_norm(style_arr[:,:,:,:3])
     return style_arr
 
@@ -79,7 +81,28 @@ def vtile_style(style, num, path):
     imgs_comb.save(path)
     return imgs_comb
 
+def deprocess(x):    
+    rank  = len(x.shape)
+    if (rank == 4):
+        # Remove extra batch dimension
+        x = np.squeeze(x, axis = 0)
+        
+    #flip the channels from BRG to RBG    
+    x = x[:, :, ::-1] 
+    
+    # Remove zero-center by image mean pixel
+    imagenet_mean = [123.68, 116.779, 103.939]
+    rn_mean = np.array((imagenet_mean), dtype=np.float32)   
+    x = x + rn_mean
+    
+    x = np.clip(x, 0, 255).astype('uint8')   # Clip for better quality image
+    
+    return x
 
+def plot_arr(arr):
+    x = deprocess(arr)
+    plt.imshow(x)
+    return
 
 class Evaluator(object):
     def __init__(self, f, shp): self.f, self.shp = f, shp
