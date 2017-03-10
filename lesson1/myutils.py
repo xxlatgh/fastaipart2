@@ -38,7 +38,7 @@ def load_image(size, path):
     width, height = size
     img = Image.open(path)
     img = img.resize((width, height))
-    img_arr = np.array(img.copy())
+    img_arr = np.array(img)
     img_arr = np.expand_dims(img_arr, 0)
     return img_arr
 
@@ -52,6 +52,26 @@ def get_content(size, content_path):
     img_arr = img_norm(img_arr)
     return img_arr
 
+def load_tile_image(size, tilesize, path):
+    width, height = size
+    tile_width, tile_height = tilesize
+    img = Image.open(path)
+    
+    tile_img = img.resize((tile_width, tile_height))     
+    tile_img = htile_style(img, int(width/tile_width))
+    img = vtile_style(tile_img, int(height/tile_height))
+    
+    img = img.resize((width, height))
+    img_arr = np.array(img)
+    img_arr = np.expand_dims(img_arr, 0)
+    return img_arr
+    
+def get_style_tile(size, tilesize, style_path):
+    style_arr = load_tile_image(size, tilesize, style_path)
+    style_arr = img_norm(style_arr[:,:,:,:3])
+    return style_arr
+
+
 def get_style(size, style_path):
     '''Get style image from disc and return as a np array.
         Args:
@@ -59,26 +79,26 @@ def get_style(size, style_path):
             style_path: The full path of the style image to load.
     '''
     style_arr = load_image(size, style_path)
-    
-    
     style_arr = img_norm(style_arr[:,:,:,:3])
     return style_arr
 
-def htile_style(style, num, path):
-    
+def htile_style(style, num):
+    '''Get style image and the number of tiles horizontally and return a new image object
+        Args:
+            style: the style image
+            num: the desired number of tiles horizontally        
+    '''
     imgs = [style for i in range(num)]
     min_shape = sorted( [(np.sum(i.size), i.size ) for i in imgs])[0][1]
     imgs_comb = np.hstack( (np.asarray( i.resize(min_shape) ) for i in imgs ) )
     imgs_comb = PIL.Image.fromarray( imgs_comb)
-    imgs_comb.save(path)
     return imgs_comb
 
-def vtile_style(style, num, path):
+def vtile_style(style, num):
     imgs = [style for i in range(num)]
     min_shape = sorted( [(np.sum(i.size), i.size ) for i in imgs])[0][1]
     imgs_comb = np.vstack( (np.asarray( i.resize(min_shape) ) for i in imgs ) )
     imgs_comb = PIL.Image.fromarray( imgs_comb)
-    imgs_comb.save(path)
     return imgs_comb
 
 def deprocess(img_arr):    
