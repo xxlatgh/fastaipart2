@@ -53,8 +53,18 @@ def get_content(size, content_path):
     return img_arr
 
 def load_tile_image(size, tilesize, path):
+    '''Load image from disc and return the created tiled image as np array.
+        Args:
+            size: The desired dimensions of output image.
+            tilesize: The desired dimensions of output unit tile image.
+            path: The full path to the imag to load.
+    '''
     width, height = size
     tile_width, tile_height = tilesize
+    
+    if (tile_width >  width) or (tile_height > height):
+        raise ValueError(
+        'Tile size needs to be smaller than the image size')
     img = Image.open(path)
     
     tile_img = img.resize((tile_width, tile_height))     
@@ -67,6 +77,12 @@ def load_tile_image(size, tilesize, path):
     return img_arr
     
 def get_style_tile(size, tilesize, style_path):
+    '''Get style image from disc and return the created tile image as np array
+        Args: 
+            size: The desired dimensions of output image.
+            tilesize: The desired dimensions of output unit tile image.
+            style_path: The full path to the imag to load.            
+    '''
     style_arr = load_tile_image(size, tilesize, style_path)
     style_arr = img_norm(style_arr[:,:,:,:3])
     return style_arr
@@ -95,6 +111,11 @@ def htile_style(style, num):
     return imgs_comb
 
 def vtile_style(style, num):
+    '''Get style image and the number of tiles vertically and return a new image object
+        Args:
+            style: the style image
+            num: the desired number of tiles vertically        
+    '''
     imgs = [style for i in range(num)]
     min_shape = sorted( [(np.sum(i.size), i.size ) for i in imgs])[0][1]
     imgs_comb = np.vstack( (np.asarray( i.resize(min_shape) ) for i in imgs ) )
