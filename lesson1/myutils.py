@@ -20,7 +20,7 @@ def img_resize(img):
 
 
 def img_norm(img_arr):
-    '''Normalize image against imagenet mean.
+    '''Normalize an image np array against imagenet mean and return as np array.
         Args:
             img_arr: a numpy array of an image.
     '''
@@ -81,27 +81,34 @@ def vtile_style(style, num, path):
     imgs_comb.save(path)
     return imgs_comb
 
-def deprocess(x):    
-    rank  = len(x.shape)
+def deprocess(img_arr):    
+    '''Returns processed image back to normal as a np array 
+        Args:
+            img_arr: a previously processed image np array  
+    '''
+    rank  = len(img_arr.shape)
     if (rank == 4):
         # Remove extra batch dimension
-        x = np.squeeze(x, axis = 0)
+        img_arr = np.squeeze(img_arr, axis = 0)
         
     #flip the channels from BRG to RBG    
-    x = x[:, :, ::-1] 
+    img_arr = img_arr[:, :, ::-1] 
     
     # Remove zero-center by image mean pixel
     imagenet_mean = [123.68, 116.779, 103.939]
     rn_mean = np.array((imagenet_mean), dtype=np.float32)   
-    x = x + rn_mean
+    img_arr = img_arr + rn_mean   
+    img_arr = np.clip(img_arr, 0, 255).astype('uint8')   # Clip for better quality image
     
-    x = np.clip(x, 0, 255).astype('uint8')   # Clip for better quality image
-    
-    return x
+    return img_arr
 
-def plot_arr(arr):
-    x = deprocess(arr)
-    plt.imshow(x)
+def plot_arr(img_arr):
+    '''Plot a image with a processed image array
+        Args:
+            arr: a previously processed image np array
+    '''    
+    img_arr = deprocess(img_arr)
+    plt.imshow(img_arr)
     return
 
 class Evaluator(object):
